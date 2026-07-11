@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Immersive Cinema Group — 5-Year Simulation</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap');
+:root{
+  --ink:#0E141F; --ink-2:#161F2E; --paper:#F3EEE1;
+  --brass:#9C7A3F; --brass-lt:#C9A466; --text-dim:#9AA4B5;
+  --pos:#3E6B4B; --pos-lt:#7FA98A; --neg:#B15C4A;
+  --streamA:#7A9E9F; --streamB:#C9A466;
+}
+*{box-sizing:border-box;}
+body{
+  margin:0; min-height:100vh;
+  background:radial-gradient(1400px 800px at 15% -5%, rgba(156,122,63,0.16), transparent 55%), var(--ink);
+  color:#E7E1D0; font-family:'Inter',sans-serif; padding:40px 6vw 60px;
+}
+.wrap{max-width:1180px;margin:0 auto;}
+header{margin-bottom:28px;}
+.eyebrow{font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:0.2em;text-transform:uppercase;color:var(--brass-lt);margin-bottom:10px;}
+h1{font-family:'Fraunces',serif;font-weight:700;font-size:clamp(26px,3.4vw,42px);margin:0 0 8px;color:#F3EEE1;}
+.sub{font-family:'Fraunces',serif;font-style:italic;font-size:16px;color:var(--text-dim);max-width:720px;margin:0;}
+
+/* ---- controls ---- */
+.controls{
+  display:flex;align-items:center;gap:18px;flex-wrap:wrap;
+  background:var(--ink-2);border:1px solid rgba(230,224,204,0.1);
+  border-radius:14px;padding:20px 24px;margin:28px 0 30px;
+}
+.playbtn{
+  width:46px;height:46px;border-radius:50%;border:none;cursor:pointer;
+  background:var(--brass-lt);color:var(--ink);font-size:16px;font-weight:700;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:.15s;
+}
+.playbtn:hover{background:#dab879;}
+.step-btn{
+  width:36px;height:36px;border-radius:50%;border:1px solid rgba(230,224,204,0.25);
+  background:transparent;color:#E7E1D0;cursor:pointer;font-size:14px;flex-shrink:0;
+}
+.step-btn:hover{border-color:var(--brass-lt);color:var(--brass-lt);}
+.timeline{flex:1;min-width:220px;}
+.year-track{position:relative;height:6px;background:rgba(230,224,204,0.15);border-radius:3px;margin:14px 0 10px;}
+.year-fill{position:absolute;left:0;top:0;height:100%;background:linear-gradient(90deg,var(--streamA),var(--brass-lt));border-radius:3px;transition:width .5s ease;}
+.year-dots{display:flex;justify-content:space-between;position:relative;top:-9px;}
+.year-dot{
+  width:20px;height:20px;border-radius:50%;background:var(--ink-2);border:2px solid rgba(230,224,204,0.25);
+  display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:9px;
+  color:var(--text-dim);cursor:pointer;transition:.2s;
+}
+.year-dot.active{border-color:var(--brass-lt);background:var(--brass-lt);color:var(--ink);font-weight:700;}
+.year-dot.passed{border-color:var(--streamA);background:var(--streamA);color:var(--ink);}
+.year-label{font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--text-dim);}
+.year-label b{color:#F3EEE1;font-size:22px;font-family:'Fraunces',serif;}
+.speed{display:flex;align-items:center;gap:8px;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text-dim);}
+.speed select{
+  background:var(--ink);color:#E7E1D0;border:1px solid rgba(230,224,204,0.2);border-radius:6px;
+  padding:5px 8px;font-family:'IBM Plex Mono',monospace;font-size:11px;
+}
+
+/* ---- stat cards ---- */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:30px;}
+@media(max-width:800px){.stats{grid-template-columns:repeat(2,1fr);}}
+.stat-card{
+  background:var(--ink-2);border-radius:12px;padding:20px 18px 16px;
+  border:1px solid rgba(230,224,204,0.08);position:relative;overflow:hidden;
+}
+.stat-card .lbl{font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:0.07em;text-transform:uppercase;color:var(--text-dim);margin-bottom:10px;}
+.stat-card .val{font-family:'Fraunces',serif;font-weight:700;font-size:28px;color:var(--brass-lt);}
+.stat-card .val.neg{color:var(--neg);}
+.stat-card .delta{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--pos-lt);margin-top:6px;}
+
+/* ---- two-stream build panels ---- */
+.streams-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:30px;}
+@media(max-width:850px){.streams-grid{grid-template-columns:1fr;}}
+.stream-panel{background:var(--ink-2);border-radius:14px;padding:24px 26px;border:1px solid rgba(230,224,204,0.08);}
+.stream-panel.a{border-top:4px solid var(--streamA);}
+.stream-panel.b{border-top:4px solid var(--streamB);}
+.stream-panel h3{font-family:'Fraunces',serif;font-size:19px;margin:0 0 4px;color:#F3EEE1;}
+.stream-panel .desc{font-size:12.5px;color:var(--text-dim);margin-bottom:16px;line-height:1.5;}
+.mini-stats{display:flex;gap:22px;margin-bottom:18px;flex-wrap:wrap;}
+.mini-stat .l{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.05em;}
+.mini-stat .v{font-family:'Fraunces',serif;font-size:19px;color:#F3EEE1;margin-top:3px;}
+
+.grid-build{display:grid;gap:4px;}
+.grid-build.a{grid-template-columns:repeat(7,1fr);}
+.grid-build.b{grid-template-columns:repeat(23,1fr);}
+.cell{aspect-ratio:1;border-radius:2px;background:rgba(230,224,204,0.08);transition:background .4s ease, transform .4s ease;}
+.cell.filled.a{background:var(--streamA);}
+.cell.filled.b{background:var(--streamB);}
+.cell.new{animation:pop .5s ease;}
+@keyframes pop{0%{transform:scale(0.3);opacity:0.3;}60%{transform:scale(1.15);}100%{transform:scale(1);opacity:1;}}
+
+/* ---- chart ---- */
+.chart-panel{background:var(--ink-2);border-radius:14px;padding:28px 30px 20px;border:1px solid rgba(230,224,204,0.08);margin-bottom:30px;}
+.chart-panel h3{font-family:'Fraunces',serif;font-size:19px;margin:0 0 18px;color:#F3EEE1;}
+.chart{display:flex;align-items:flex-end;gap:26px;height:210px;padding:0 6px;}
+.chart-col{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;}
+.bars{display:flex;gap:6px;align-items:flex-end;height:170px;}
+.bar{width:20px;border-radius:4px 4px 0 0;position:relative;background:rgba(230,224,204,0.08);transition:height .6s cubic-bezier(.2,.9,.3,1);}
+.bar.rev{background:linear-gradient(180deg,var(--brass-lt),var(--brass));}
+.bar.ebitda{background:linear-gradient(180deg,var(--pos-lt),var(--pos));}
+.bar .bv{position:absolute;top:-19px;left:50%;transform:translateX(-50%);font-size:10px;font-family:'IBM Plex Mono',monospace;color:#E7E1D0;white-space:nowrap;opacity:0;transition:opacity .3s ease .3s;}
+.bar.show .bv{opacity:1;}
+.chart-col .yl{margin-top:10px;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text-dim);}
+.chart-col.future{opacity:0.25;}
+.legend{display:flex;gap:20px;margin-top:16px;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text-dim);}
+.legend span{display:inline-flex;align-items:center;gap:6px;}
+.sw{width:10px;height:10px;border-radius:2px;}
+
+/* ---- milestone log ---- */
+.log-panel{background:var(--ink-2);border-radius:14px;padding:24px 28px;border:1px solid rgba(230,224,204,0.08);}
+.log-panel h3{font-family:'Fraunces',serif;font-size:19px;margin:0 0 14px;color:#F3EEE1;}
+.log-entry{
+  display:flex;gap:14px;padding:10px 0;border-bottom:1px solid rgba(230,224,204,0.07);
+  font-size:13.5px;opacity:0;transform:translateY(6px);transition:opacity .4s ease, transform .4s ease;
+}
+.log-entry.show{opacity:1;transform:translateY(0);}
+.log-entry .tag{
+  font-family:'IBM Plex Mono',monospace;font-size:10px;padding:3px 8px;border-radius:10px;
+  height:fit-content;white-space:nowrap;
+}
+.log-entry .tag.a{background:rgba(122,158,159,0.2);color:var(--streamA);}
+.log-entry .tag.b{background:rgba(201,164,102,0.2);color:var(--streamB);}
+.log-entry .txt{color:#D8D2C0;line-height:1.5;}
+
+footer{max-width:1180px;margin:30px auto 0;font-size:12.5px;color:var(--text-dim);font-style:italic;line-height:1.6;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Interactive Simulation — 11 July 2026</div>
+    <h1>5-Year Combined Build-Out Simulation</h1>
+    <p class="sub">Press play to watch both streams roll out year by year — private cinema deliveries, 4DX screen openings, and combined revenue / EBITDA compounding across the five-year plan.</p>
+  </header>
+
+  <div class="controls">
+    <button class="step-btn" id="prevBtn" title="Previous year">◀</button>
+    <button class="playbtn" id="playBtn" title="Play">▶</button>
+    <button class="step-btn" id="nextBtn" title="Next year">▶</button>
+    <div class="timeline">
+      <div class="year-track"><div class="year-fill" id="yearFill" style="width:0%;"></div></div>
+      <div class="year-dots" id="yearDots"></div>
+    </div>
+    <div class="year-label">Year <b id="yearNum">0</b> / 5</div>
+    <div class="speed">
+      Speed
+      <select id="speedSel">
+        <option value="2200">1×</option>
+        <option value="1200" selected>2×</option>
+        <option value="600">4×</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="stats">
+    <div class="stat-card"><div class="lbl">Combined Revenue (Yr)</div><div class="val" id="statRev">$0.0M</div><div class="delta" id="statRevD"></div></div>
+    <div class="stat-card"><div class="lbl">Venture CapEx (Yr)</div><div class="val" id="statCapex">$0.0M</div><div class="delta" id="statCapexD"></div></div>
+    <div class="stat-card"><div class="lbl">Combined EBITDA (Yr)</div><div class="val" id="statEbitda">$0.0M</div><div class="delta" id="statEbitdaD"></div></div>
+    <div class="stat-card"><div class="lbl">Cumulative EBITDA</div><div class="val" id="statCumEbitda">$0.0M</div><div class="delta" id="statCumEbitdaD"></div></div>
+  </div>
+
+  <div class="streams-grid">
+    <div class="stream-panel a">
+      <h3>Stream A — Private Cinema Program</h3>
+      <div class="desc">Client-funded construction · venture earns 40% of build cost as annual service revenue</div>
+      <div class="mini-stats">
+        <div class="mini-stat"><div class="l">Cinemas Delivered</div><div class="v" id="aUnits">0 / 35</div></div>
+        <div class="mini-stat"><div class="l">Stream Revenue</div><div class="v" id="aRev">$0.0M</div></div>
+        <div class="mini-stat"><div class="l">Stream EBITDA</div><div class="v" id="aEbitda">$0.0M</div></div>
+      </div>
+      <div class="grid-build a" id="gridA"></div>
+    </div>
+    <div class="stream-panel b">
+      <h3>Stream B — Global 4DX Network</h3>
+      <div class="desc">Venture-funded construction · 25-year leased sites, AI-produced content slate</div>
+      <div class="mini-stats">
+        <div class="mini-stat"><div class="l">Screens Opened</div><div class="v" id="bUnits">0 / 230</div></div>
+        <div class="mini-stat"><div class="l">Stream Revenue</div><div class="v" id="bRev">$0.0M</div></div>
+        <div class="mini-stat"><div class="l">Stream EBITDA</div><div class="v" id="bEbitda">$0.0M</div></div>
+      </div>
+      <div class="grid-build b" id="gridB"></div>
+    </div>
+  </div>
+
+  <div class="chart-panel">
+    <h3>Combined Revenue vs. EBITDA Trajectory</h3>
+    <div class="chart" id="chart"></div>
+    <div class="legend">
+      <span><span class="sw" style="background:var(--brass-lt);"></span>Revenue</span>
+      <span><span class="sw" style="background:var(--pos-lt);"></span>EBITDA</span>
+    </div>
+  </div>
+
+  <div class="log-panel">
+    <h3>Milestone Log</h3>
+    <div id="logList"></div>
+  </div>
+
+  <footer>
+    Simulation built from the assumptions in the Combined Venture 5-Year Report: Stream A rollout of 3→5→7→9→11 private cinemas/year (35 total, client-funded); Stream B rollout of 230 screens across 195 countries per the tiered cadence in the Global 4DX Network report. Figures are an illustrative planning simulation, not an audited forecast.
+  </footer>
+</div>
+
+<script>
+const data = {
+  years: [1,2,3,4,5],
+  a: {
+    added:      [3,5,7,9,11],
+    cum:        [3,8,15,24,35],
+    revenue:    [2.2,6.0,11.4,18.6,27.6],
+    ebitda:     [-1.5,4.2,8.0,13.0,19.3],
+    total: 35
+  },
+  b: {
+    added:      [35,48,52,50,45],
+    cum:        [35,82,134,184,230],
+    revenue:    [28.2,88.7,154.5,218.5,277.6],
+    ebitda:     [1.3,35.7,64.3,92.2,118.1],
+    total: 230
+  },
+  combined: {
+    revenue:    [30.5,94.7,165.9,237.1,305.2],
+    capex:      [71.3,58.9,38.4,32.1,26.8],
+    ebitda:     [-0.1,39.9,72.3,105.3,137.4],
+    cumEbitda:  [-0.1,39.8,112.1,217.4,354.8]
+  },
+  milestones: {
+    1: [
+      {tag:"a", txt:"First 3 bespoke private cinemas delivered; curation & concierge platform stood up ($3M build-out)."},
+      {tag:"b", txt:"35 screens opened — 10 megacity flagships live; AI production house infrastructure build begins."}
+    ],
+    2: [
+      {tag:"a", txt:"5 more cinemas delivered (8 cumulative); Stream A turns EBITDA-positive at $4.2M."},
+      {tag:"b", txt:"48 screens added (82 cumulative); first cohort of Year-1 screens reach full run-rate revenue."}
+    ],
+    3: [
+      {tag:"a", txt:"7 more cinemas delivered (15 cumulative); shared AI content tier cross-sold into private cinemas."},
+      {tag:"b", txt:"52 screens added (134 cumulative) — over half the global network is now live."}
+    ],
+    4: [
+      {tag:"a", txt:"9 more cinemas delivered (24 cumulative); Stream A EBITDA reaches $13.0M."},
+      {tag:"b", txt:"50 screens added (184 cumulative); network approaches steady-state occupancy."}
+    ],
+    5: [
+      {tag:"a", txt:"Final 11 cinemas delivered — 35 total across 5 years; fee structure reviewed for Year 6+."},
+      {tag:"b", txt:"Final 45 screens open — 230-screen network complete across 195 countries."},
+      {tag:"combined", txt:"Combined Year-5 revenue reaches $305.2M with $137.4M EBITDA; cumulative 5-year EBITDA of $354.8M surpasses cumulative venture CapEx of $227.5M."}
+    ]
+  }
+};
+
+let currentYear = 0; // 0 = not started
+let playing = false;
+let timer = null;
+
+const yearDotsEl = document.getElementById('yearDots');
+for (let y=1;y<=5;y++){
+  const d = document.createElement('div');
+  d.className = 'year-dot';
+  d.textContent = y;
+  d.dataset.year = y;
+  d.addEventListener('click', ()=> { stop(); goToYear(y); });
+  yearDotsEl.appendChild(d);
+}
+
+const gridA = document.getElementById('gridA');
+const gridB = document.getElementById('gridB');
+for (let i=0;i<data.a.total;i++){
+  const c = document.createElement('div');
+  c.className = 'cell a';
+  gridA.appendChild(c);
+}
+for (let i=0;i<data.b.total;i++){
+  const c = document.createElement('div');
+  c.className = 'cell b';
+  gridB.appendChild(c);
+}
+
+const chartEl = document.getElementById('chart');
+for (let y=1;y<=5;y++){
+  const col = document.createElement('div');
+  col.className = 'chart-col future';
+  col.id = 'col'+y;
+  col.innerHTML = `
+    <div class="bars">
+      <div class="bar rev" id="barRev${y}" style="height:0px;"><span class="bv" id="bvRev${y}"></span></div>
+      <div class="bar ebitda" id="barEb${y}" style="height:0px;"><span class="bv" id="bvEb${y}"></span></div>
+    </div>
+    <div class="yl">Yr ${y}</div>
+  `;
+  chartEl.appendChild(col);
+}
+
+const maxRev = Math.max(...data.combined.revenue);
+const barMaxPx = 170;
+
+function fmt(n, showSign){
+  const sign = n<0 ? "−" : (showSign ? "+" : "");
+  return sign + "$" + Math.abs(n).toFixed(1) + "M";
+}
+
+function setStat(id, deltaId, value, prevValue, allowNeg){
+  const el = document.getElementById(id);
+  el.textContent = fmt(value,false);
+  el.classList.toggle('neg', value<0);
+  if (deltaId){
+    const d = document.getElementById(deltaId);
+    if (prevValue===undefined){ d.textContent = ''; }
+    else {
+      const diff = value - prevValue;
+      d.textContent = (diff>=0?'▲ ':'▼ ') + fmt(diff,true) + ' vs prior yr';
+    }
+  }
+}
+
+function renderGrid(gridEl, filledCount, prevFilled, letter){
+  const cells = gridEl.querySelectorAll('.cell');
+  cells.forEach((c,i)=>{
+    if (i < filledCount){
+      c.classList.add('filled');
+      if (i>=prevFilled){ c.classList.add('new'); setTimeout(()=>c.classList.remove('new'), 600); }
+    } else {
+      c.classList.remove('filled');
+    }
+  });
+}
+
+function renderLog(year){
+  const list = document.getElementById('logList');
+  list.innerHTML = '';
+  for (let y=1;y<=year;y++){
+    (data.milestones[y]||[]).forEach(m=>{
+      const div = document.createElement('div');
+      div.className = 'log-entry';
+      div.innerHTML = `<span class="tag ${m.tag}">${m.tag==='a'?'STREAM A':m.tag==='b'?'STREAM B':'COMBINED'} · YR ${y}</span><span class="txt">${m.txt}</span>`;
+      list.appendChild(div);
+    });
+  }
+  requestAnimationFrame(()=>{
+    list.querySelectorAll('.log-entry').forEach((el,i)=>{
+      setTimeout(()=> el.classList.add('show'), i*40);
+    });
+  });
+}
+
+function renderChart(year){
+  for (let y=1;y<=5;y++){
+    const col = document.getElementById('col'+y);
+    const barRev = document.getElementById('barRev'+y);
+    const barEb = document.getElementById('barEb'+y);
+    const bvRev = document.getElementById('bvRev'+y);
+    const bvEb = document.getElementById('bvEb'+y);
+    if (y<=year){
+      col.classList.remove('future');
+      const rev = data.combined.revenue[y-1];
+      const eb = data.combined.ebitda[y-1];
+      barRev.style.height = Math.max(2,(rev/maxRev)*barMaxPx)+'px';
+      barEb.style.height = Math.max(2,(Math.abs(eb)/maxRev)*barMaxPx)+'px';
+      barRev.classList.add('show'); barEb.classList.add('show');
+      bvRev.textContent = rev.toFixed(1);
+      bvEb.textContent = eb.toFixed(1);
+    } else {
+      col.classList.add('future');
+      barRev.style.height='0px'; barEb.style.height='0px';
+      barRev.classList.remove('show'); barEb.classList.remove('show');
+    }
+  }
+}
+
+function goToYear(year){
+  const prevYear = currentYear;
+  currentYear = year;
+
+  document.getElementById('yearNum').textContent = year;
+  document.getElementById('yearFill').style.width = (year/5*100)+'%';
+  document.querySelectorAll('.year-dot').forEach(d=>{
+    const dy = parseInt(d.dataset.year);
+    d.classList.toggle('active', dy===year);
+    d.classList.toggle('passed', dy<year);
+  });
+
+  if (year===0){
+    setStat('statRev','statRevD',0);
+    setStat('statCapex','statCapexD',0);
+    setStat('statEbitda','statEbitdaD',0);
+    setStat('statCumEbitda','statCumEbitdaD',0);
+    document.getElementById('aUnits').textContent = '0 / 35';
+    document.getElementById('bUnits').textContent = '0 / 230';
+    document.getElementById('aRev').textContent = '$0.0M';
+    document.getElementById('aEbitda').textContent = '$0.0M';
+    document.getElementById('bRev').textContent = '$0.0M';
+    document.getElementById('bEbitda').textContent = '$0.0M';
+    renderGrid(gridA,0,0); renderGrid(gridB,0,0);
+    renderChart(0);
+    document.getElementById('logList').innerHTML = '';
+    return;
+  }
+
+  const i = year-1;
+  const prevI = prevYear-1;
+
+  setStat('statRev','statRevD', data.combined.revenue[i], prevYear>0?data.combined.revenue[prevI]:undefined);
+  setStat('statCapex','statCapexD', data.combined.capex[i], prevYear>0?data.combined.capex[prevI]:undefined);
+  setStat('statEbitda','statEbitdaD', data.combined.ebitda[i], prevYear>0?data.combined.ebitda[prevI]:undefined);
+  setStat('statCumEbitda','statCumEbitdaD', data.combined.cumEbitda[i], prevYear>0?data.combined.cumEbitda[prevI]:undefined);
+
+  document.getElementById('aUnits').textContent = data.a.cum[i] + ' / 35';
+  document.getElementById('bUnits').textContent = data.b.cum[i] + ' / 230';
+  document.getElementById('aRev').textContent = fmt(data.a.revenue[i],false);
+  document.getElementById('aEbitda').textContent = fmt(data.a.ebitda[i],false);
+  document.getElementById('bRev').textContent = fmt(data.b.revenue[i],false);
+  document.getElementById('bEbitda').textContent = fmt(data.b.ebitda[i],false);
+
+  renderGrid(gridA, data.a.cum[i], prevYear>0?data.a.cum[prevI]:0);
+  renderGrid(gridB, data.b.cum[i], prevYear>0?data.b.cum[prevI]:0);
+
+  renderChart(year);
+  renderLog(year);
+}
+
+function play(){
+  playing = true;
+  document.getElementById('playBtn').textContent = '❚❚';
+  const speed = parseInt(document.getElementById('speedSel').value);
+  tick(speed);
+}
+function tick(speed){
+  timer = setInterval(()=>{
+    if (currentYear>=5){ stop(); return; }
+    goToYear(currentYear+1);
+  }, speed);
+}
+function stop(){
+  playing = false;
+  document.getElementById('playBtn').textContent = '▶';
+  clearInterval(timer);
+}
+
+document.getElementById('playBtn').addEventListener('click', ()=>{
+  if (playing){ stop(); }
+  else {
+    if (currentYear>=5) goToYear(0);
+    play();
+  }
+});
+document.getElementById('nextBtn').addEventListener('click', ()=>{
+  stop();
+  if (currentYear<5) goToYear(currentYear+1);
+});
+document.getElementById('prevBtn').addEventListener('click', ()=>{
+  stop();
+  if (currentYear>0) goToYear(currentYear-1);
+});
+document.getElementById('speedSel').addEventListener('change', ()=>{
+  if (playing){ stop(); play(); }
+});
+
+goToYear(0);
+</script>
+</body>
+</html>
